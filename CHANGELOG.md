@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.4.2 - 2026-10-04
+
+### Fixed
+
+- API hardening: stricter request validation and error paths.
+- Theme rendering now uses real OCS theming values; field-level error rendering synced from the shared component.
+- Localization parity and catalog corpus fixes.
+
+### Changed
+
+- Atlas v3.5.14 verification pass: expanded contract coverage; store screenshot URLs corrected.
+
 ## 1.4.1 - 2026-09-17
 
 ### Fixed
