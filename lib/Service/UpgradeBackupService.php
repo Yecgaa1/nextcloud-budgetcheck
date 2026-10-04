@@ -166,6 +166,8 @@ class UpgradeBackupService
 			try {
 				$snapshots[] = $this->readManifest($this->getSnapshotFolder($snapshotId), $snapshotId);
 			} catch (\Throwable $e) {
+				// best-effort: listing is read-only; one unreadable folder must not
+				// hide the remaining snapshots, so it is skipped (log-only).
 				$this->logger->warning('BudgetCheck: skipping unreadable upgrade backup folder', [
 					'app' => UpgradeBackupCatalog::APP_ID,
 					'folder' => $snapshotId,
@@ -237,6 +239,9 @@ class UpgradeBackupService
 				$this->db->executeStatement('ALTER SESSION SET CONSTRAINTS = DEFERRED');
 				$oracleConstraintsDeferred = true;
 			} catch (\Throwable $e) {
+				// best-effort: deferring Oracle constraints is an optimization only;
+				// the restore table order already satisfies FK ordering, so a
+				// failure here must degrade, not abort the restore.
 				$this->logger->warning('BudgetCheck: Oracle constraints could not be deferred for restore; relying on restore table order.', [
 					'exception' => $e,
 				]);
@@ -804,6 +809,9 @@ class UpgradeBackupService
 					$folder->delete();
 				}
 			} catch (\Throwable $e) {
+				// best-effort: purge continues past corrupt folders; the failed
+				// folder is compensated by the delete below and the sweep must
+				// not abort on one bad snapshot.
 				$this->logger->warning('BudgetCheck: removing corrupt upgrade backup folder', [
 					'app' => UpgradeBackupCatalog::APP_ID,
 					'folder' => $snapshotId,

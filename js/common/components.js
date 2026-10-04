@@ -71,6 +71,51 @@
 
 	let openInstance = null;
 
+	/**
+	 * Where focus lands when a dialog closes. The captured trigger may be
+	 * disconnected OR hidden by the time close() runs — row action menus are
+	 * collapsed (`<ul hidden>`) when the dialog opens, and list re-renders
+	 * after a mutation destroy the node entirely. Focusing a detached or
+	 * hidden node silently drops focus to <body> (WCAG 2.4.3). Resolve lazily
+	 * at close time: trigger (if still connected AND rendered) → first
+	 * actionable in the page-actions slot → page title → main landmark.
+	 */
+	function isRenderedFocusable(el) {
+		if (!el || el === document.body || el === document.documentElement
+			|| typeof el.focus !== 'function' || !el.isConnected) {
+			return false;
+		}
+		// checkVisibility catches `hidden`/display:none ancestry (the collapsed
+		// row menu case); getClientRects is the fallback for older engines.
+		if (typeof el.checkVisibility === 'function') {
+			try {
+				return el.checkVisibility({ checkVisibilityCSS: true });
+			} catch (_) { /* fall through to rects */ }
+		}
+		return typeof el.getClientRects === 'function' ? el.getClientRects().length > 0 : true;
+	}
+
+	function resolveModalRestoreTarget(previousFocus) {
+		if (isRenderedFocusable(previousFocus)) {
+			return previousFocus;
+		}
+		const actions = document.getElementById('bc-page-actions');
+		if (actions) {
+			const actionable = actions.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+			if (actionable) {
+				return actionable;
+			}
+		}
+		const title = document.getElementById('bc-page-title');
+		if (title) {
+			if (!title.hasAttribute('tabindex')) {
+				title.setAttribute('tabindex', '-1');
+			}
+			return title;
+		}
+		return document.getElementById('bc-main-content');
+	}
+
 	function openModal(options) {
 		const opts = Object.assign({
 			title: '',
@@ -167,6 +212,20 @@
 						window.BudgetCheckMessaging.handleApiError(err, { reloadOnConflict: false });
 					} finally {
 						primaryBtn.disabled = false;
+						// Disabling a focused button drops focus to <body>
+						// (Chromium) and re-enabling does not bring it back —
+						// with the dialog still open after a failed submit,
+						// Tab would escape into page chrome (WCAG 2.4.3).
+						// When focus actually fell to the page, pull it back
+						// to the primary control. Field-error marking or a
+						// client guard may have already moved focus onto an
+						// input — that wins (activeElement is not body then).
+						if (primaryBtn.isConnected
+							&& (!document.activeElement
+								|| document.activeElement === document.body
+								|| document.activeElement === document.documentElement)) {
+							try { primaryBtn.focus(); } catch (_) { /* noop */ }
+						}
 					}
 				},
 			},
@@ -222,8 +281,25 @@
 				if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
 				document.body.classList.remove('bc-modal-open');
 				openInstance = null;
-				if (previousFocus && typeof previousFocus.focus === 'function') {
-					try { previousFocus.focus(); } catch (_) { /* element may be gone */ }
+				const restoreTarget = resolveModalRestoreTarget(previousFocus);
+				if (restoreTarget) {
+					try { restoreTarget.focus(); } catch (_) { /* element may be gone */ }
+				}
+				// Mutation-driven closes race with the list re-render that
+				// follows them: the target we just focused can be destroyed a
+				// tick later, dumping focus on <body>. Re-resolve once on the
+				// next frame — only when focus actually fell back to the page.
+				if (typeof window.requestAnimationFrame === 'function') {
+					window.requestAnimationFrame(() => {
+						const active = document.activeElement;
+						if (!active || active === document.body || active === document.documentElement
+							|| !active.isConnected) {
+							const next = resolveModalRestoreTarget(previousFocus);
+							if (next) {
+								try { next.focus(); } catch (_) { /* still gone */ }
+							}
+						}
+					});
 				}
 				if (typeof opts.resolve === 'function') opts.resolve(result);
 				if (result === false && typeof opts.onCancel === 'function') opts.onCancel();
@@ -553,7 +629,7 @@
 				t('budgetcheck', 'Everyday spending budget'),
 				t('budgetcheck', 'Planned spending on groceries, housing, and similar—excluding savings transfers.'),
 				[
-					makeTile(t('budgetcheck', 'Budget saldo'), budget.remaining, { primary: true }),
+					makeTile(t('budgetcheck', 'Budget balance'), budget.remaining, { primary: true }),
 					makeTile(t('budgetcheck', 'Not spent (under budget)'), unspentEnv),
 					makeTile(t('budgetcheck', 'Overspent (over budget)'), overspentEnv),
 				],

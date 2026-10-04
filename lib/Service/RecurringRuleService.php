@@ -6,6 +6,7 @@ namespace OCA\BudgetCheck\Service;
 
 use OCA\BudgetCheck\Exception\AccessDeniedException;
 use OCA\BudgetCheck\Exception\InternalErrorException;
+use OCA\BudgetCheck\Support\StrictBool;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IDBConnection;
 
@@ -268,7 +269,7 @@ class RecurringRuleService
 			}
 		}
 		if (array_key_exists('isActive', $payload)) {
-			$updates['is_active'] = (bool)$payload['isActive'];
+			$updates['is_active'] = StrictBool::field($payload, 'isActive');
 		}
 		if (array_key_exists('postingMode', $payload) || array_key_exists('posting_mode', $payload)) {
 			$updates['posting_mode'] = $this->normalisePostingMode($payload['postingMode'] ?? $payload['posting_mode']);
@@ -278,7 +279,7 @@ class RecurringRuleService
 		// scheduled occurrence so Generate can resume (skipping dates that already
 		// have a live planned row).
 		if (array_key_exists('isActive', $payload)
-			&& (bool)$payload['isActive']
+			&& (StrictBool::field($payload, 'isActive'))
 			&& !(bool)$row['is_active']
 			&& $newFrequency === self::FREQ_SCHEDULE
 			&& !array_key_exists('next_due_date', $updates)) {

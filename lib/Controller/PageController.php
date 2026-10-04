@@ -565,6 +565,8 @@ class PageController extends Controller
 		Util::addStyle(Application::APP_ID, 'common/tokens');
 		Util::addStyle(Application::APP_ID, 'app');
 		Util::addStyle(Application::APP_ID, 'common/mobile-nav');
+		// Inline field errors for server VALIDATION `fields` maps (WCAG 3.3.1/3.3.3).
+		Util::addStyle(Application::APP_ID, 'common/field-errors');
 		if ($pageScript === 'transactions') {
 			Util::addStyle(Application::APP_ID, 'transactions');
 		}
@@ -574,6 +576,9 @@ class PageController extends Controller
 		// Bootstrap first: page modules resolve deps via BudgetCheck.require/onReady
 		// and must never snapshot window.BudgetCheck* at IIFE evaluation time.
 		Util::addScript(Application::APP_ID, 'common/bootstrap');
+		// Field-level error renderer must load before common/api — the API
+		// client calls CheckFieldErrors.markValidationFields on `fields` maps.
+		Util::addScript(Application::APP_ID, 'common/field-errors');
 		Util::addScript(Application::APP_ID, 'common/api');
 		Util::addScript(Application::APP_ID, 'common/constants');
 		Util::addScript(Application::APP_ID, 'common/dates');

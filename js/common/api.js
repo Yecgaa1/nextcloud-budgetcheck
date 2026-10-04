@@ -11,6 +11,28 @@
 
 	const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+	// Field-level validation errors (canonical apps/_shared/field-errors):
+	// server VALIDATION payloads carry `error.fields` ({fieldKey: message});
+	// each named control gets aria-invalid + an inline .bc-field-error.
+	if (window.CheckFieldErrors && typeof window.CheckFieldErrors.install === 'function') {
+		try {
+			window.CheckFieldErrors.install({ prefix: 'bc' });
+		} catch (_e) { /* never break the API client */ }
+	}
+
+	function markFieldErrors(data) {
+		try {
+			const fields = data && data.error && typeof data.error === 'object'
+				? data.error.fields
+				: null;
+			if (fields && typeof fields === 'object'
+				&& window.CheckFieldErrors
+				&& typeof window.CheckFieldErrors.markValidationFields === 'function') {
+				window.CheckFieldErrors.markValidationFields(fields);
+			}
+		} catch (_e) { /* never mask the real error path */ }
+	}
+
 	function csrfToken() {
 		if (window.OC && OC.requestToken) {
 			return OC.requestToken;
@@ -74,6 +96,7 @@
 		const isJson = (response.headers.get('content-type') || '').toLowerCase().includes('application/json');
 		const data = isJson ? await response.json().catch(() => null) : await response.text();
 		if (!response.ok) {
+			markFieldErrors(data);
 			const err = new Error(
 				(data && typeof data === 'object' && data.message)
 					? String(data.message)
@@ -173,6 +196,7 @@
 		const isJson = (response.headers.get('content-type') || '').toLowerCase().includes('application/json');
 		const data = isJson ? await response.json().catch(() => null) : await response.text();
 		if (!response.ok) {
+			markFieldErrors(data);
 			const err = new Error(
 				(data && typeof data === 'object' && data.message)
 					? String(data.message)

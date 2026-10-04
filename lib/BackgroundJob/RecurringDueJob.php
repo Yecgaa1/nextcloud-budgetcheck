@@ -45,6 +45,9 @@ final class RecurringDueJob extends TimedJob
 				$this->logger->info('BudgetCheck recurring due sweep finished', $summary);
 			}
 		} catch (\Throwable $e) {
+			// best-effort: job-level catch — the sweep is idempotent and the next
+			// cron run retries; a throw here would only mark this run failed
+			// without changing what the next run does.
 			$this->logger->error('BudgetCheck recurring due sweep failed: ' . $e->getMessage(), [
 				'exception' => $e,
 			]);

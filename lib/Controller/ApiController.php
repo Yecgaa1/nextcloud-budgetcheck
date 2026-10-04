@@ -22,6 +22,7 @@ use OCA\BudgetCheck\Service\CategoryService;
 use OCA\BudgetCheck\Service\CurrencyCatalog;
 use OCA\BudgetCheck\Service\ImportPreferencesService;
 use OCA\BudgetCheck\Service\SummaryViewPreferencesService;
+use OCA\BudgetCheck\Support\StrictBool;
 use OCA\BudgetCheck\Service\MoneyService;
 use OCA\BudgetCheck\Service\RateLimitService;
 use OCA\BudgetCheck\Service\RecurringRuleService;
@@ -193,15 +194,17 @@ class ApiController extends Controller
 	#[NoCSRFRequired]
 	public function getWorkspace(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
-		return $this->safe(fn (string $u): array => ['workspace' => $this->workspaces->getForUser($id, $u)]);
+		return $this->safe(function (string $u) use ($id): array {
+			$id = $this->validateId($id);
+			return ['workspace' => $this->workspaces->getForUser($id, $u)];
+		});
 	}
 
 	#[NoAdminRequired]
 	public function updateWorkspace(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'workspace_update', 30, 300);
 			return ['workspace' => $this->workspaces->updateWorkspace($id, $userId, $this->payload())];
 		});
@@ -212,8 +215,8 @@ class ApiController extends Controller
 	#[NoCSRFRequired]
 	public function previewWorkspaceDelete(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'workspace_delete_preview', 30, 300);
 			return ['impact' => $this->workspaceDeletion->previewImpact($id, $userId)];
 		});
@@ -222,8 +225,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function deleteWorkspace(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'workspace_delete', 5, 3600);
 			$payload = $this->payload();
 			$confirmName = (string)($payload['confirmName'] ?? $payload['confirm_name'] ?? '');
@@ -234,8 +237,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function updateTaxMode(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'workspace_tax_mode', 20, 300);
 			return ['workspace' => $this->workspaces->updateTaxMode($id, $userId, $this->payload())];
 		});
@@ -245,8 +248,10 @@ class ApiController extends Controller
 	#[NoCSRFRequired]
 	public function listMembers(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
-		return $this->safe(fn (string $u): array => ['members' => $this->workspaces->listMembers($id, $u)]);
+		return $this->safe(function (string $u) use ($id): array {
+			$id = $this->validateId($id);
+			return ['members' => $this->workspaces->listMembers($id, $u)];
+		});
 	}
 
 	#[NoAdminRequired]
@@ -276,8 +281,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function updateBookingStatus(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'booking_status_write', 40, 300);
 			return ['status' => $this->bookingStatuses->update($id, $userId, $this->payload())];
 		});
@@ -286,8 +291,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function deactivateBookingStatus(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'booking_status_write', 40, 300);
 			return ['status' => $this->bookingStatuses->deactivate($id, $userId)];
 		});
@@ -296,8 +301,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function addMember(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'member_write', 30, 300);
 			return ['members' => $this->workspaces->addMember($id, $userId, $this->payload())];
 		});
@@ -306,8 +311,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function updateMember(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'member_write', 30, 300);
 			return ['members' => $this->workspaces->updateMember($id, $userId, $this->payload())];
 		});
@@ -316,8 +321,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function removeMember(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'member_write', 30, 300);
 			return ['members' => $this->workspaces->removeMember($id, $userId)];
 		});
@@ -326,8 +331,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function addGroupMember(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'member_write', 30, 300);
 			return ['members' => $this->workspaces->addGroupMember($id, $userId, $this->payload())];
 		});
@@ -336,8 +341,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function updateGroupMember(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'member_write', 30, 300);
 			return ['members' => $this->workspaces->updateGroupMember($id, $userId, $this->payload())];
 		});
@@ -346,8 +351,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function removeGroupMember(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'member_write', 30, 300);
 			return ['members' => $this->workspaces->removeGroupMember($id, $userId)];
 		});
@@ -391,8 +396,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function updateCategory(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'category_write', 60, 300);
 			return ['category' => $this->presentCategoryToClient(
 				$this->categories->update($id, $userId, $this->payload()),
@@ -403,8 +408,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function deactivateCategory(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'category_write', 60, 300);
 			return ['category' => $this->presentCategoryToClient(
 				$this->categories->deactivate($id, $userId),
@@ -502,8 +507,8 @@ class ApiController extends Controller
 	#[NoCSRFRequired]
 	public function getImportPreferences(int $workspaceId): JSONResponse
 	{
-		$workspaceId = $this->validateId($workspaceId);
 		return $this->safe(function (string $userId) use ($workspaceId): array {
+			$workspaceId = $this->validateId($workspaceId);
 			$this->workspaces->getForUser($workspaceId, $userId);
 			return ['preferences' => $this->importPreferences->get($workspaceId, $userId)];
 		});
@@ -512,8 +517,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function saveImportPreferences(int $workspaceId): JSONResponse
 	{
-		$workspaceId = $this->validateId($workspaceId);
 		return $this->safe(function (string $userId) use ($workspaceId): array {
+			$workspaceId = $this->validateId($workspaceId);
 			$this->workspaces->getForUser($workspaceId, $userId);
 			$this->rateLimit->assertAllowed($userId, 'import_preferences_write', 60, 300);
 			return ['preferences' => $this->importPreferences->save($workspaceId, $userId, $this->payload())];
@@ -524,11 +529,11 @@ class ApiController extends Controller
 	#[NoCSRFRequired]
 	public function getSummaryViewPreferences(int $workspaceId): JSONResponse
 	{
-		$workspaceId = $this->validateId($workspaceId);
 		return $this->safe(function (string $userId) use ($workspaceId): array {
+			$workspaceId = $this->validateId($workspaceId);
 			$workspace = $this->workspaces->getForUser($workspaceId, $userId);
 			if (($workspace['type'] ?? '') !== WorkspaceService::TYPE_HOUSEHOLD) {
-				throw new WorkspaceTypeMismatchException('Summary view preferences apply to household workspaces only.');
+				throw new WorkspaceTypeMismatchException('household', (string)($workspace['type'] ?? ''), 'summary_view_preferences_read');
 			}
 			$default = (bool)($workspace['includeSpecialsInTotalsDefault'] ?? false);
 			return [
@@ -540,11 +545,11 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function saveSummaryViewPreferences(int $workspaceId): JSONResponse
 	{
-		$workspaceId = $this->validateId($workspaceId);
 		return $this->safe(function (string $userId) use ($workspaceId): array {
+			$workspaceId = $this->validateId($workspaceId);
 			$workspace = $this->workspaces->getForUser($workspaceId, $userId);
 			if (($workspace['type'] ?? '') !== WorkspaceService::TYPE_HOUSEHOLD) {
-				throw new WorkspaceTypeMismatchException('Summary view preferences apply to household workspaces only.');
+				throw new WorkspaceTypeMismatchException('household', (string)($workspace['type'] ?? ''), 'summary_view_preferences_write');
 			}
 			$this->rateLimit->assertAllowed($userId, 'summary_view_prefs_write', 120, 300);
 			$default = (bool)($workspace['includeSpecialsInTotalsDefault'] ?? false);
@@ -559,8 +564,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function updateTransaction(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$payload = $this->payload();
 			$existing = $this->transactions->loadForWorkspace($id, $this->ownerWorkspaceForTransaction($id));
 			if ($existing === null) {
@@ -583,8 +588,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function deleteTransaction(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$workspaceId = $this->ownerWorkspaceForTransaction($id);
 			$workspace = $this->workspaces->getForUser($workspaceId, $userId);
 			$this->rateLimit->assertAllowed($userId, 'transaction_write', 240, 300);
@@ -607,8 +612,8 @@ class ApiController extends Controller
 	#[NoCSRFRequired]
 	public function listTransactionAttachments(int $transactionId): JSONResponse
 	{
-		$transactionId = $this->validateId($transactionId);
 		return $this->safe(function (string $userId) use ($transactionId): array {
+			$transactionId = $this->validateId($transactionId);
 			$this->ownerWorkspaceForTransaction($transactionId);
 			return [
 				'attachments' => $this->transactionAttachments->listForTransaction($transactionId, $userId),
@@ -619,8 +624,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function uploadTransactionAttachment(int $transactionId): JSONResponse
 	{
-		$transactionId = $this->validateId($transactionId);
 		return $this->safe(function (string $userId) use ($transactionId): array {
+			$transactionId = $this->validateId($transactionId);
 			$this->ownerWorkspaceForTransaction($transactionId);
 			$this->rateLimit->assertAllowed($userId, 'transaction_attachment_write', 120, 300);
 			if (!isset($_FILES['file']) || !is_array($_FILES['file'])) {
@@ -634,8 +639,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function deleteTransactionAttachment(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'transaction_attachment_write', 120, 300);
 			$this->transactionAttachments->delete($id, $userId);
 			return ['deleted' => true, 'id' => $id];
@@ -645,8 +650,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function replaceTransactionAttachment(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$this->rateLimit->assertAllowed($userId, 'transaction_attachment_write', 120, 300);
 			if (!isset($_FILES['file']) || !is_array($_FILES['file'])) {
 				throw new \InvalidArgumentException('No file was uploaded.');
@@ -713,8 +718,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function updateRecurringRule(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$payload = $this->payload();
 			$workspaceId = $this->ownerWorkspaceForRecurringRule($id);
 			$workspace = $this->workspaces->getForUser($workspaceId, $userId);
@@ -730,8 +735,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function deleteRecurringRule(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$workspaceId = $this->ownerWorkspaceForRecurringRule($id);
 			$workspace = $this->workspaces->getForUser($workspaceId, $userId);
 			$this->rateLimit->assertAllowed($userId, 'recurring_write', 30, 300);
@@ -743,8 +748,8 @@ class ApiController extends Controller
 	#[NoAdminRequired]
 	public function generateFromRecurringRule(int $id): JSONResponse
 	{
-		$id = $this->validateId($id);
 		return $this->safe(function (string $userId) use ($id): array {
+			$id = $this->validateId($id);
 			$payload = $this->payload();
 			$workspaceId = $this->ownerWorkspaceForRecurringRule($id);
 			$workspace = $this->workspaces->getForUser($workspaceId, $userId);
@@ -868,7 +873,7 @@ class ApiController extends Controller
 			$this->rateLimit->assertAllowed($userId, 'budget_write', 60, 300);
 			$budgets = $this->budgets->bulkUpsert($workspaceId, $userId, $ym, $rows, $workspace);
 			$out = ['budgets' => $budgets];
-			$generate = !empty($payload['generatePlanned']);
+			$generate = StrictBool::field($payload, 'generatePlanned');
 			if (!$generate && array_key_exists('generatePlanned', $payload) === false) {
 				$generate = (bool)($workspace['generatePlannedFromBudgetsDefault'] ?? false);
 			}

@@ -120,7 +120,7 @@ test.describe('BudgetCheck filter each_value (Atlas 3.5.10)', () => {
 		const morePanel = page.locator('[data-bc-tx-more-panel]');
 		await more.scrollIntoViewIfNeeded();
 		if ((await more.getAttribute('aria-expanded')) !== 'true') {
-			await page.getByRole('button', { name: /More filters|Weitere Filter/i }).click();
+			await more.click();
 		}
 		await expect(more).toHaveAttribute('aria-expanded', 'true', { timeout: 10000 });
 		await expect(morePanel).not.toHaveAttribute('hidden');
@@ -214,7 +214,7 @@ test.describe('BudgetCheck filter each_value (Atlas 3.5.10)', () => {
 		await form.locator('button[type="reset"]').click();
 		await waitTxSettled(page);
 		if ((await more.getAttribute('aria-expanded')) !== 'true') {
-			await page.getByRole('button', { name: /More filters|Weitere Filter/i }).click();
+			await more.click();
 		}
 		await expect(more).toHaveAttribute('aria-expanded', 'true');
 		await range.selectOption('custom');

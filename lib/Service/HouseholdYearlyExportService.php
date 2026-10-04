@@ -129,13 +129,13 @@ class HouseholdYearlyExportService
 			['Net result', $this->envToMajor($totals['netResult'] ?? null)],
 			['Savings target', $this->envToMajor($totals['savingsTarget'] ?? null)],
 			['Savings achieved', $this->envToMajor($totals['savingsAchieved'] ?? null)],
-			['Budget saldo', $this->envToMajor($totals['budgetSaldo'] ?? null)],
+			['Budget balance', $this->envToMajor($totals['budgetSaldo'] ?? null)],
 			['Not spent (under budget)', $this->envToMajor($totals['budgetUnspent'] ?? null)],
 			['Overspent (over budget)', $this->envToMajor($totals['budgetOverspent'] ?? null)],
 			['Months over budget', (int)($totals['overBudgetMonths'] ?? 0)],
 			[],
 			['Monthly overview', '', '', '', '', '', ''],
-			['Month', 'Income', 'Expenses', 'Net result', 'Savings target', 'Savings achieved', 'Budget saldo'],
+			['Month', 'Income', 'Expenses', 'Net result', 'Savings target', 'Savings achieved', 'Budget balance'],
 		];
 		foreach ($months as $month) {
 			if (!is_array($month)) {

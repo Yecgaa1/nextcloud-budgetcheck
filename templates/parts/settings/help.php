@@ -28,7 +28,7 @@
 				<dt><?php p($l->t('Savings achieved')); ?></dt>
 				<dd><?php p($l->t('When a category is marked as savings transfer, progress uses those bookings. Otherwise it uses income minus everyday expenses.')); ?></dd>
 				<dt><?php p($l->t('Savings transfer')); ?></dt>
-				<dd><?php p($l->t('Category flag for money moved to savings. Counts toward your savings goal and is excluded from everyday budget saldo, but stays in total expenses.')); ?></dd>
+				<dd><?php p($l->t('Category flag for money moved to savings. Counts toward your savings goal and is excluded from everyday budget balance, but stays in total expenses.')); ?></dd>
 				<dt><?php p($l->t('Planned entry')); ?></dt>
 				<dd><?php p($l->t('A reminder booking from a Plan-mode recurring rule or from category budget targets. Recurring plans match amount; budget plans match category (any amount). A matching real booking removes the plan. Book-mode recurring rules write real transactions instead.')); ?></dd>
 				<dt><?php p($l->t('Cap warning')); ?></dt>

@@ -6,6 +6,7 @@ namespace OCA\BudgetCheck\Service;
 
 use OCA\BudgetCheck\Exception\AccessDeniedException;
 use OCA\BudgetCheck\Exception\ConflictException;
+use OCA\BudgetCheck\Support\StrictBool;
 use OCA\BudgetCheck\Exception\InternalErrorException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IDBConnection;
@@ -433,10 +434,10 @@ class TransactionService
 		}
 		$title = $this->resolveTitle((string)($payload['title'] ?? ''), $category);
 		$notes = $this->normaliseNotes($payload['notes'] ?? null);
-		$isSpecial = !empty($payload['isSpecial']) || ($category['isSpecial'] ?? false);
+		$isSpecial = StrictBool::field($payload, 'isSpecial') || ($category['isSpecial'] ?? false);
 		$externalRef = $this->normaliseExternalRef($payload['externalRef'] ?? null);
 		$bookingStatusId = $this->resolveBookingStatusId($workspace, $bookingStatus);
-		$isPlanned = !empty($payload['isPlanned']);
+		$isPlanned = StrictBool::field($payload, 'isPlanned');
 		$recurringRuleId = isset($payload['recurringRuleId']) ? (int)$payload['recurringRuleId'] : null;
 		if ($recurringRuleId !== null && $recurringRuleId < 1) {
 			$recurringRuleId = null;
@@ -660,7 +661,7 @@ class TransactionService
 			}
 		}
 		if (array_key_exists('isSpecial', $payload)) {
-			$isSpecial = (bool)$payload['isSpecial'];
+			$isSpecial = StrictBool::field($payload, 'isSpecial');
 			if ($isSpecial !== (bool)$existing['is_special']) {
 				$updates['is_special'] = $isSpecial;
 				$logChanges['isSpecial'] = $isSpecial;

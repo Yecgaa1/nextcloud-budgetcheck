@@ -7,6 +7,7 @@ namespace OCA\BudgetCheck\Service;
 use OCA\BudgetCheck\AppInfo\Application;
 use OCA\BudgetCheck\Exception\AccessDeniedException;
 use OCA\BudgetCheck\Exception\ConflictException;
+use OCA\BudgetCheck\Support\StrictBool;
 use OCA\BudgetCheck\Migration\BudgetCheckTableCatalog;
 use OCA\BudgetCheck\Exception\InternalErrorException;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -136,7 +137,7 @@ class WorkspaceService
 		$currency = $this->normaliseCurrency((string)($payload['currencyCode'] ?? $this->access->getDefaultCurrency()));
 		$timezone = $this->normaliseTimezone((string)($payload['timezone'] ?? $this->access->getDefaultTimezone()));
 		$fiscalStart = $this->normaliseFiscalStartMonth((int)($payload['fiscalYearStartMonth'] ?? 1), $type);
-		$autoCopy = !empty($payload['autoCopyBudgetsFromPreviousMonth']);
+		$autoCopy = StrictBool::field($payload, 'autoCopyBudgetsFromPreviousMonth');
 		$overspendThreshold = $this->normaliseNullableMinor($payload['overspendThresholdMinor'] ?? null);
 		[$defaultSavingsMode, $defaultSavingsPercentBp, $defaultSavingsMinor] = $this->normaliseSavingsDefaults($payload, $type, $currency);
 
@@ -282,14 +283,14 @@ class WorkspaceService
 			}
 		}
 		if ($workspace['type'] === self::TYPE_HOUSEHOLD && array_key_exists('autoCopyBudgetsFromPreviousMonth', $payload)) {
-			$autoCopy = (bool)$payload['autoCopyBudgetsFromPreviousMonth'];
+			$autoCopy = StrictBool::field($payload, 'autoCopyBudgetsFromPreviousMonth');
 			if ($autoCopy !== $workspace['autoCopyBudgetsFromPreviousMonth']) {
 				$updates[self::COL_AUTO_COPY_PREV_MONTH] = $autoCopy;
 				$logChanges['autoCopyBudgetsFromPreviousMonth'] = $autoCopy;
 			}
 		}
 		if ($workspace['type'] === self::TYPE_HOUSEHOLD && array_key_exists('includeSpecialsInTotalsDefault', $payload)) {
-			$includeDefault = (bool)$payload['includeSpecialsInTotalsDefault'];
+			$includeDefault = StrictBool::field($payload, 'includeSpecialsInTotalsDefault');
 			$current = (bool)($workspace['includeSpecialsInTotalsDefault'] ?? false);
 			if ($includeDefault !== $current) {
 				$updates['include_specials_default'] = $includeDefault;
@@ -297,7 +298,7 @@ class WorkspaceService
 			}
 		}
 		if ($workspace['type'] === self::TYPE_HOUSEHOLD && array_key_exists('generatePlannedFromBudgetsDefault', $payload)) {
-			$generateDefault = (bool)$payload['generatePlannedFromBudgetsDefault'];
+			$generateDefault = StrictBool::field($payload, 'generatePlannedFromBudgetsDefault');
 			$current = (bool)($workspace['generatePlannedFromBudgetsDefault'] ?? false);
 			if ($generateDefault !== $current) {
 				$updates['gen_planned_budget'] = $generateDefault;
@@ -493,7 +494,7 @@ class WorkspaceService
 		$workspace = $this->getForUser($workspaceId, $userId);
 		$this->access->ensureMinimumRole($workspaceId, $userId, AccessControlService::ROLE_MANAGER);
 
-		$enabled = !empty($payload['taxModeEnabled']);
+		$enabled = StrictBool::field($payload, 'taxModeEnabled');
 		$basis = strtolower((string)($payload['taxBudgetBasis'] ?? $workspace['taxBudgetBasis']));
 		if (!in_array($basis, self::TAX_BUDGET_BASES, true)) {
 			throw new \InvalidArgumentException('taxBudgetBasis must be one of: ' . implode(', ', self::TAX_BUDGET_BASES) . '.');

@@ -87,7 +87,7 @@ $urlsJson = htmlspecialchars(json_encode($urls, JSON_THROW_ON_ERROR | JSON_UNESC
 	<div id="bc-live-region" class="bc-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 	<div id="bc-alert-region" class="bc-sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
 	<div id="app-content-wrapper" class="bc-shell">
-		<header class="bc-page-header" aria-labelledby="bc-page-title">
+		<header class="bc-page-header" role="group" aria-labelledby="bc-page-title">
 			<button type="button"
 				class="bc-nav-toggle"
 				id="bc-nav-toggle"

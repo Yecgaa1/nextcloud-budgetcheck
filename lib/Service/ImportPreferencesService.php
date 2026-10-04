@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\BudgetCheck\Service;
 
 use OCA\BudgetCheck\AppInfo\Application;
+use OCA\BudgetCheck\Support\StrictBool;
 use OCP\IConfig;
 
 /**
@@ -111,8 +112,8 @@ class ImportPreferencesService
 		if (!in_array($mode, self::DIRECTION_MODES, true)) {
 			$mode = 'auto';
 		}
-		$skipDuplicates = !empty($payload['skipDuplicates']);
-		$skipFingerprint = $skipDuplicates && !empty($payload['skipFingerprintDuplicates']);
+		$skipDuplicates = StrictBool::field($payload, 'skipDuplicates');
+		$skipFingerprint = $skipDuplicates && StrictBool::field($payload, 'skipFingerprintDuplicates');
 
 		return [
 			'expenseCategoryId' => $expense > 0 ? $expense : null,

@@ -16,12 +16,14 @@ function resolveStorageState() {
 test.use({ storageState: resolveStorageState() });
 
 async function skipIfLogin(page) {
-	const updateNeeded = page.getByRole('heading', { name: /update needed|aktualisierung erforderlich/i });
+	// i18n: NC core "update needed" chrome renders in the instance locale, not the fixture user's.
+	const updateNeeded = page.getByRole('heading', { name: /update needed|aktualisierung erforderlich/i }); // i18n: instance-locale NC core chrome, not user-locale app text
 	if (await updateNeeded.isVisible({ timeout: 1500 }).catch(() => false)) {
 		test.skip(true, 'Nextcloud shows Update needed — run occ upgrade');
 	}
-	const login = page.getByRole('heading', { name: /log in to nextcloud|bei nextcloud anmelden/i });
-	const onLogin = await login.isVisible({ timeout: 3000 }).catch(() => false);
+	// Structural: core login is detectable by its credential form, not by heading text.
+	const onLogin = /\/login/.test(page.url())
+		|| await page.locator('input#user, input[name="user"]').first().isVisible({ timeout: 3000 }).catch(() => false);
 	if (onLogin) {
 		const hasCreds = !!(process.env.E2E_USER && (process.env.E2E_PASSWORD || process.env.E2E_PASS));
 		if (hasCreds) {
@@ -42,7 +44,7 @@ test.describe('Dashboard summary + warning recovery', () => {
 		const app = page.locator('#app-content.bc-app, #app-content[data-bc-app], .bc-app').first();
 		await expect(app).toBeVisible({ timeout: 20_000 });
 
-		const emptyPicker = page.getByRole('heading', { name: /pick or create a workspace|workspace wählen|workspace auswählen/i });
+		const emptyPicker = page.locator('#bc-empty-title');
 		if (await emptyPicker.isVisible({ timeout: 1500 }).catch(() => false)) {
 			test.skip(true, 'No active workspace in this E2E session');
 		}

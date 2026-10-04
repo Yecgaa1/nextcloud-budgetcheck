@@ -24,12 +24,14 @@ function resolveStorageState() {
 test.use({ storageState: resolveStorageState() });
 
 async function skipIfLogin(page) {
-	const updateNeeded = page.getByRole('heading', { name: /update needed|aktualisierung erforderlich/i });
+	// i18n: NC core "update needed" chrome renders in the instance locale, not the fixture user's.
+	const updateNeeded = page.getByRole('heading', { name: /update needed|aktualisierung erforderlich/i }); // i18n: instance-locale NC core chrome, not user-locale app text
 	if (await updateNeeded.isVisible({ timeout: 1500 }).catch(() => false)) {
 		test.skip(true, 'Nextcloud shows Update needed — run: docker compose exec -u www-data nextcloud php occ upgrade');
 	}
-	const login = page.getByRole('heading', { name: /log in to nextcloud|bei nextcloud anmelden/i });
-	const onLogin = await login.isVisible({ timeout: 3000 }).catch(() => false);
+	// Structural: core login is detectable by its credential form / URL, not by heading text.
+	const onLogin = /\/login/.test(page.url())
+		|| await page.locator('input#user, input[name="user"]').first().isVisible({ timeout: 3000 }).catch(() => false);
 	if (onLogin) {
 		const hasCreds = !!(process.env.E2E_USER && (process.env.E2E_PASSWORD || process.env.E2E_PASS));
 		if (hasCreds) {

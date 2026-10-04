@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\BudgetCheck\Service;
 
 use OCA\BudgetCheck\AppInfo\Application;
+use OCA\BudgetCheck\Support\StrictBool;
 use OCP\IConfig;
 
 /**
@@ -49,10 +50,7 @@ class SummaryViewPreferencesService
 	public function save(int $workspaceId, string $userId, array $payload, bool $workspaceDefault): array
 	{
 		$this->access->ensureMinimumRole($workspaceId, $userId, AccessControlService::ROLE_VIEWER);
-		if (!array_key_exists('includeSpecialsInTotals', $payload)) {
-			throw new \InvalidArgumentException('includeSpecialsInTotals is required.');
-		}
-		$include = (bool)$payload['includeSpecialsInTotals'];
+		$include = StrictBool::requiredField($payload, 'includeSpecialsInTotals');
 		$this->config->setUserValue(
 			$userId,
 			Application::APP_ID,

@@ -26,21 +26,66 @@
 			window.setTimeout(() => { target.textContent = String(message); }, 10);
 		}
 		const container = ensureToastContainer();
+		// Dedup on kind+text with timer reset: an identical toast already
+		// showing gets its dismiss timer reset instead of stacking duplicates
+		// (rapid retries, repeated API failures).
+		const dedupKey = k + '|' + String(message);
+		// The key is tracked both as an attribute (probe/debug visibility) and
+		// as a JS property so the dedup still works in minimal DOM shims.
+		const existing = typeof container.querySelectorAll === 'function'
+			? container.querySelectorAll('.bc-toast[data-bc-toast-key]')
+			: Array.prototype.slice.call(container.childNodes || []);
+		for (const prev of existing) {
+			const prevKey = typeof prev.getAttribute === 'function'
+				? prev.getAttribute('data-bc-toast-key')
+				: prev._bcToastKey;
+			if (prevKey === dedupKey || prev._bcToastKey === dedupKey) {
+				if (prev._bcDismissTimer && typeof window.clearTimeout === 'function') {
+					window.clearTimeout(prev._bcDismissTimer);
+				}
+				prev._bcDismissTimer = window.setTimeout(() => {
+					if (prev.parentNode) prev.parentNode.removeChild(prev);
+				}, k === 'error' ? 7000 : 4000);
+				return;
+			}
+		}
 		const toast = document.createElement('div');
 		toast.className = 'bc-toast bc-toast--' + k;
 		toast.setAttribute('role', k === 'error' ? 'alert' : 'status');
+		toast.setAttribute('data-bc-toast-key', dedupKey);
+		toast._bcToastKey = dedupKey;
+		const content = document.createElement('span');
+		content.className = 'bc-toast__content';
 		const text = document.createElement('span');
+		text.className = 'bc-toast__text';
 		text.textContent = String(message);
+		content.appendChild(text);
 		const close = document.createElement('button');
 		close.type = 'button';
 		close.className = 'bc-toast__close';
 		close.setAttribute('aria-label', t('budgetcheck', 'Dismiss'));
 		close.textContent = '✕';
 		close.addEventListener('click', () => toast.remove());
-		toast.appendChild(text);
+		toast.appendChild(content);
 		toast.appendChild(close);
+		if (k === 'error') {
+			// Family contract (_shared/app-feedback): error toasts offer a
+			// "Report this problem" mailto. The shared showToast/showError
+			// wrapper never sees bc-toast surfaces (announce() is the API),
+			// so attach the link directly here.
+			try {
+				const feedback = window.SbdAppFeedback;
+				if (feedback && typeof feedback.buildMailto === 'function') {
+					const link = document.createElement('a');
+					link.className = 'bc-nav-footer__toast-link';
+					link.href = feedback.buildMailto('problem', {});
+					link.textContent = t('budgetcheck', 'Report this problem');
+					content.appendChild(link);
+				}
+			} catch (e) { /* never break the toast */ }
+		}
 		container.appendChild(toast);
-		window.setTimeout(() => {
+		toast._bcDismissTimer = window.setTimeout(() => {
 			if (toast.parentNode) toast.parentNode.removeChild(toast);
 		}, k === 'error' ? 7000 : 4000);
 	}
@@ -96,8 +141,27 @@
 		announce(t('budgetcheck', 'The action could not be completed. Please try again.'), 'error');
 	}
 
+	/**
+	 * Field-level error for client-side validation — parity with server
+	 * `fields` maps. Renders the inline .bc-field-error + aria-invalid via
+	 * CheckFieldErrors (which also focuses the offender) AND announces on the
+	 * assertive live region. `field` may be a control name, a [data-field]
+	 * key, or an element id — the shared renderer resolves all three.
+	 */
+	function fieldError(field, message) {
+		const msg = String(message);
+		try {
+			if (window.CheckFieldErrors && typeof window.CheckFieldErrors.markValidationFields === 'function') {
+				const fields = {};
+				fields[String(field)] = msg;
+				window.CheckFieldErrors.markValidationFields(fields);
+			}
+		} catch (e) { /* marking must never break the error path */ }
+		announce(msg, 'error');
+	}
+
 	if (!window.BudgetCheck || typeof window.BudgetCheck.define !== 'function') {
 		throw new Error('BudgetCheck bootstrap missing — Messaging cannot register');
 	}
-	window.BudgetCheck.define('Messaging', { announce, handleApiError });
+	window.BudgetCheck.define('Messaging', { announce, fieldError, handleApiError });
 })();

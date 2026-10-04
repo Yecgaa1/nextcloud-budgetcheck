@@ -23,7 +23,7 @@ $allowedGroupIds = is_array($policy['allowedGroupIds'] ?? null) ? $policy['allow
 $appUrl = (string)($_['appUrl'] ?? '');
 ?>
 <div class="section bc-admin-settings" lang="<?php p(str_replace('_', '-', $l->getLanguageCode())); ?>">
-	<header class="bc-admin-intro">
+	<header class="bc-admin-intro" role="group">
 		<h2><?php p($l->t('BudgetCheck')); ?></h2>
 		<p class="bc-admin-intro__lead">
 			<?php p($l->t('Workspace details, members, categories, savings targets and tax mode are managed in BudgetCheck under Workspace settings (workspace managers). Global directory access and app administrators are edited under App settings in the app.')); ?>

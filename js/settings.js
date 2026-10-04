@@ -1063,7 +1063,7 @@
 				savingsRow.appendChild(savingsInput);
 				savingsRow.appendChild(C.createElement('span', {
 					class: 'bc-boolean-control__text',
-					text: t('budgetcheck', 'Transfers in this category count toward your savings goal and are excluded from everyday budget saldo.'),
+					text: t('budgetcheck', 'Transfers in this category count toward your savings goal and are excluded from everyday budget balance.'),
 				}));
 				savingsOuter.appendChild(savingsRow);
 				form.appendChild(savingsOuter);

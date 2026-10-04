@@ -229,7 +229,7 @@
 			t('budgetcheck', 'Everyday spending budget'),
 			null,
 			[
-				makeTile(t('budgetcheck', 'Budget saldo'), totals.budgetSaldo, true),
+				makeTile(t('budgetcheck', 'Budget balance'), totals.budgetSaldo, true),
 				makeTile(t('budgetcheck', 'Not spent (under budget)'), totals.budgetUnspent),
 				makeTile(t('budgetcheck', 'Overspent (over budget)'), totals.budgetOverspent),
 				C.createElement('div', { class: 'bc-summary-tile' }, [
@@ -307,7 +307,7 @@
 			cardChildren.push(
 				C.createElement('span', {
 					class: 'bc-month-card__meta',
-					text: t('budgetcheck', 'Budget saldo: {saldo}')
+					text: t('budgetcheck', 'Budget balance: {saldo}')
 						.replace('{saldo}', Money.formatEnvelope(m.budget?.saldo, Ws.htmlLang)),
 				}),
 			);
@@ -359,7 +359,7 @@
 				desc: t('budgetcheck', 'How much of your yearly savings target was achieved.'),
 			},
 			{
-				label: t('budgetcheck', 'Budget saldo'),
+				label: t('budgetcheck', 'Budget balance'),
 				value: formatEnv(totals.budgetSaldo),
 				desc: t('budgetcheck', 'Total budget result. Negative means over budget, positive means under budget.'),
 			},

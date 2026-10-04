@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\BudgetCheck\Service;
 
 use OCA\BudgetCheck\Exception\AccessDeniedException;
+use OCA\BudgetCheck\Support\StrictBool;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IDBConnection;
 
@@ -21,7 +22,7 @@ use OCP\IDBConnection;
  *   "car") without inventing a new entity.
  * - `is_savings_transfer` marks expense categories used for money moved to
  *   savings. Those bookings stay in total expenses (bank mirror) but are
- *   excluded from everyday budget saldo and count toward savings progress.
+ *   excluded from everyday budget balance and count toward savings progress.
  */
 class CategoryService
 {
@@ -98,7 +99,7 @@ class CategoryService
 		$name = $this->normaliseName((string)($payload['name'] ?? ''));
 		$type = $this->normaliseType((string)($payload['type'] ?? ''));
 		$groupKey = $this->normaliseGroupKey($payload['groupKey'] ?? null);
-		$isSpecial = !empty($payload['isSpecial']);
+		$isSpecial = StrictBool::field($payload, 'isSpecial');
 		$isSavingsTransfer = $this->normaliseIsSavingsTransfer($payload['isSavingsTransfer'] ?? false, $type);
 		$taxMode = $this->normaliseTaxMode((string)($payload['taxHandlingMode'] ?? 'inherit_workspace'));
 
@@ -153,7 +154,7 @@ class CategoryService
 			}
 		}
 		if (array_key_exists('isSpecial', $payload)) {
-			$isSpecial = (bool)$payload['isSpecial'];
+			$isSpecial = StrictBool::field($payload, 'isSpecial');
 			if ($isSpecial !== $category['isSpecial']) {
 				$updates['is_special'] = $isSpecial;
 				$logChanges['isSpecial'] = $isSpecial;
@@ -458,7 +459,7 @@ class CategoryService
 
 	private function normaliseIsSavingsTransfer(mixed $value, string $categoryType): bool
 	{
-		$flag = !empty($value);
+		$flag = StrictBool::parse($value) ?? false;
 		if ($flag && $categoryType !== self::TYPE_EXPENSE) {
 			throw new \InvalidArgumentException('isSavingsTransfer applies to expense categories only.');
 		}

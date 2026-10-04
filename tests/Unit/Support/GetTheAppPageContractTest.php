@@ -84,10 +84,17 @@ final class GetTheAppPageContractTest extends TestCase
 	public function testCssSeparatesStaticFeaturesFromActionButtons(): void
 	{
 		$css = (string) file_get_contents($this->root . '/css/app.css');
+		// Check-family chrome contract: tint well + border, NO decorative
+		// gradient stage fill (Atlas DS reject class; cf. ticketcheck
+		// portal-kb-hero fix). Extract the hero rule body and assert.
 		self::assertMatchesRegularExpression(
-			'/\.bc-get-app__hero[^{]*\{[^}]*linear-gradient/s',
+			'/\.bc-get-app__hero\s*\{(?<body>[^}]*)\}/s',
 			$css,
 		);
+		preg_match('/\.bc-get-app__hero\s*\{(?<body>[^}]*)\}/s', $css, $heroRule);
+		$heroBody = (string)($heroRule['body'] ?? '');
+		self::assertStringNotContainsString('linear-gradient', $heroBody);
+		self::assertMatchesRegularExpression('/background:\s*var\(--bc-tint-/', $heroBody);
 		self::assertMatchesRegularExpression(
 			'/\.bc-get-app__feature-copy[^{]*\{[^}]*flex-direction:\s*column/s',
 			$css,
